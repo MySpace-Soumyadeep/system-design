@@ -2,7 +2,7 @@
 
 /*
  * client will come to this factory and will say I want this algorithm 
- * ans we will have to give him that load balancer
+ * ans we will have to give him that load balancer 
  */
 
  /*
