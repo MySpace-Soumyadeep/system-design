@@ -1,9 +1,10 @@
 //  least connection, round robin...etc 
-
+import java.util.*;
 /*
  * client will come to this factory and will say I want this algorithm 
  * ans we will have to give him that load balancer 
  */
+import java.util.stream.Collectors;
 
  /*
    Load balancer - what it do?? it will have Request as input ---> Node as o/p, so basically routing of requests
@@ -31,7 +32,7 @@
     Map<RequestType, Service> serviceMap;
 
     //There should be a way to register a request type to a service
-    public void register(RequestType requestType, Service){
+    public void register(RequestType requestType, Service service){
         serviceMap.put(requestType, service);
     }
 
@@ -67,7 +68,7 @@
      Destination balanceLoad(Request request){
        
         //for every destination, I need to checkc which has the lowest load - minimum number of connections
-        getDestinations(request).stream()
+        Destination destination = getDestinations(request).stream()
             .min(Comparator.comparingInt(d->d.requestsBeingServed))
             .orElseThrow();
         return destination;
@@ -91,6 +92,10 @@
 
         return destination;
     }
+
+    private Queue<Destination> convertToQueue(Set<Destination> destinations) {
+        return null;
+    }
  }
  // to handle sticky sessions
 
@@ -100,7 +105,7 @@
     Destination balanceLoad(Request request){
         Set<Destination> destinations = getDestinations(request);
         List<Destination> collect = destinations.stream().collect(Collectors.toList());
-        return list.get(request.id.hashCode() % list.size());
+        return collect.get(request.id.hashCode() % collect.size());
  }
 }
 
@@ -128,7 +133,7 @@
     Map<String, String> parameters;
  }
 
- enum{}
+ enum RequestType{}
 
  class Destination{
     String ipAddress;
@@ -153,17 +158,17 @@
     /*
      * destination may call this method in itself, so private method completeRequest which will decrement once request has been served or completed
      */
-    private void completeRequest(){
-        requestsBeingServed--;
-    }
+    // private void completeRequest(){
+    //     requestsBeingServed--;
+    // }
  }
 
 class LoadBalancerFactory{
     public LoadBalancer createLoadBaalancer(String lbType) {
-        return  switch(lbType){
-            case "round-robin": new RoundRobinLoadBalancer();
-            case "least-connection": new LeastConnectionLoadBalancer();
-            default: new LeastConnectionLoadBalancer();
+          switch(lbType){
+            case "round-robin": return new RoundRobinLoadBalancer();
+            case "least-connection": return new LeastConnectionLoadBalancer();
+            default: return new LeastConnectionLoadBalancer();
         }
     }
 }
@@ -179,114 +184,114 @@ class LoadBalancerFactory{
 
 // -----------------------------code ----------------------------------
 
-abstract class LoadBalancer{
+// abstract class LoadBalancer{
    
-    Map<RequestType, Service> serviceMap;
+//     Map<RequestType, Service> serviceMap;
     
-    public void register(RequestType requestType, Service){
-        serviceMap.put(requestType, service);
-    }
+//     public void register(RequestType requestType, Service){
+//         serviceMap.put(requestType, service);
+//     }
 
-    protected Set<Destination> getDestinations(Request request){
-        Service service = serviceMap.get(request.requestType);
-        return service.destinations;
-    }
+//     protected Set<Destination> getDestinations(Request request){
+//         Service service = serviceMap.get(request.requestType);
+//         return service.destinations;
+//     }
 
-    abstract Destination balanceLoad(Request request);
- }
+//     abstract Destination balanceLoad(Request request);
+//  }
 
- class LeastConnectionLoadBalancer extends LoadBalancer{
+//  class LeastConnectionLoadBalancer extends LoadBalancer{
      
-     @Override
-     Destination balanceLoad(Request request){
-        getDestinations(request).stream()
-            .min(Comparator.comparingInt(d->d.requestsBeingServed))
-            .orElseThrow();
-        return destination;
+//      @Override
+//      Destination balanceLoad(Request request){
+//         getDestinations(request).stream()
+//             .min(Comparator.comparingInt(d->d.requestsBeingServed))
+//             .orElseThrow();
+//         return destination;
 
-     }
+//      }
 
- }
+//  }
 
- class RoundRobinLoadBalancer extends LoadBalancer{
+//  class RoundRobinLoadBalancer extends LoadBalancer{
     
-    Map<RequestType, Queue<Destination>> destinationsForRequest;
+//     Map<RequestType, Queue<Destination>> destinationsForRequest;
 
-    @Override
-    Destination balanceLoad(Request request){
-        if(!destinationsForRequest.containsKey(request.requestType)){
-            Set<Destination> destinations = getDestinations(request);
-            destinationsForRequest.put(request.requestType, convertToQueue(destinations));
-        }
-        Destination destination = destinationsForRequest.get(request.requestType).poll();
-        destinationsForRequest.get(request.requestType).add(destination);
-        destination.acceptRequest(request);
+//     @Override
+//     Destination balanceLoad(Request request){
+//         if(!destinationsForRequest.containsKey(request.requestType)){
+//             Set<Destination> destinations = getDestinations(request);
+//             destinationsForRequest.put(request.requestType, convertToQueue(destinations));
+//         }
+//         Destination destination = destinationsForRequest.get(request.requestType).poll();
+//         destinationsForRequest.get(request.requestType).add(destination);
+//         destination.acceptRequest(request);
 
-        return destination;
-    }
- }
+//         return destination;
+//     }
+//  }
 
- class RoutedLoadBalancer extends LoadBalancer{
+//  class RoutedLoadBalancer extends LoadBalancer{
     
-    @Override
-    Destination balanceLoad(Request request){
-        Set<Destination> destinations = getDestinations(request);
-        List<Destination> collect = destinations.stream().collect(Collectors.toList());
-        return list.get(request.id.hashCode() % list.size());
- }
-}
+//     @Override
+//     Destination balanceLoad(Request request){
+//         Set<Destination> destinations = getDestinations(request);
+//         List<Destination> collect = destinations.stream().collect(Collectors.toList());
+//         return list.get(request.id.hashCode() % list.size());
+//  }
+// }
 
- class Service{
-    String name;
-    Set<Destination> destinations;
+//  class Service{
+//     String name;
+//     Set<Destination> destinations;
 
-    public void addDestination(Destination destination){
-         destinations.add(destination);
-    }
-    public void removeDestination(Destination destination){
-        destinations.remove(destination);
-   }
- }
+//     public void addDestination(Destination destination){
+//          destinations.add(destination);
+//     }
+//     public void removeDestination(Destination destination){
+//         destinations.remove(destination);
+//    }
+//  }
 
- class Request{
+//  class Request{
 
-    String id;
-    RequestType requestType;
-    Map<String, String> parameters;
- }
+//     String id;
+//     RequestType requestType;
+//     Map<String, String> parameters;
+//  }
 
- enum RequestType{
+//  enum RequestType{
 
- }
+//  }
 
- class Destination{
-    String ipAddress;
-    int requestsBeingServed;
-    int threshold;
+//  class Destination{
+//     String ipAddress;
+//     int requestsBeingServed;
+//     int threshold;
 
-    public boolean acceptRequest(Request request){
-        if(threshold <= requestsBeingServed){
-            requestsBeingServed++;
-            return true;
-        }
-        else{
-            return false;
-        }
-    }
+//     public boolean acceptRequest(Request request){
+//         if(threshold <= requestsBeingServed){
+//             requestsBeingServed++;
+//             return true;
+//         }
+//         else{
+//             return false;
+//         }
+//     }
     
-    private void completeRequest(){
-        requestsBeingServed--;
-    }
- }
+//     private void completeRequest(){
+//         requestsBeingServed--;
+//     }
+//  }
 
 
-class LoadBalancerFactory{
-    public LoadBalancer createLoadBaalancer(String lbType) {
-        return  switch(lbType){
-            case "round-robin": new RoundRobinLoadBalancer();
-            case "least-connection": new LeastConnectionLoadBalancer();
-            default: new LeastConnectionLoadBalancer();
-        }
-    }
-}
+// class LoadBalancerFactory{
+//     public LoadBalancer createLoadBaalancer(String lbType) {
+//         return  switch(lbType){
+//             case "round-robin": new RoundRobinLoadBalancer();
+//             case "least-connection": new LeastConnectionLoadBalancer();
+//             default: new LeastConnectionLoadBalancer();
+//         }
+//     }
+// }
  
