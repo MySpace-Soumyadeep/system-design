@@ -28,7 +28,7 @@ public class SlidingWindow implements RateLimiter{
 
      private void updateQueue(long currentTime){
         if(slidingWindow.isEmpty()) return;
-        lomg time = (currentTime - slidingWindow.peek()) / 1000;
+        long time = (currentTime - slidingWindow.peek()) / 1000;
 
         while(time >=this.time){
             slidingWindow.poll();

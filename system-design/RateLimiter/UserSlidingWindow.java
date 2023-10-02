@@ -5,8 +5,8 @@ public class UserSlidingWindow{
     Map<Integer, SlidingWindow> bucket;
 
     public UserSlidingWindow(int id){
-        bucket = new HashMap();
-        bucket.put(id, new SlidingWindow(time:1, cap:10);)
+        bucket = new HashMap<>();
+        bucket.put(id, new SlidingWindow(1,10));
     }
 
     void accessApplication(int id){
